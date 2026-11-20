@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#05080d">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="杨丞琳《雨爱》雨夜语录轮播 — 深色雨夜、冷光呼吸、细斜雨线。纯前端单文件，离线可跑。">
+<title>雨爱 · 语录</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.92em' font-size='88'>🌧</text></svg>">
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+
+  :root{
+    --ink:#e7eef6;
+    --dim:#8ea6bc;
+    --cold:#93bfdf;
+  }
+
+  html,body{height:100%;margin:0}
+
+  body{
+    background:radial-gradient(125% 92% at 50% 6%,#0d1a28 0%,#070d14 46%,#04070a 100%);
+    color:var(--ink);
+    font-family:"Songti SC","STSong","SimSun","Source Han Serif SC","Noto Serif CJK SC","Times New Roman",serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+    text-rendering:optimizeLegibility;
+  }
+
+  .frame{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+
+  /* ── 雨 ───────────────────────────────────────────── */
+  #rain{position:fixed;inset:0;display:block;width:100%;height:100%;z-index:1;pointer-events:none}
+
+  /* ── 冷光呼吸 ──────────────────────────────────────── */
+  .glow{
+    position:fixed;left:50%;top:40%;width:132vmin;height:132vmin;
+    translate:-50% -50%;border-radius:50%;z-index:0;pointer-events:none;
+    background:radial-gradient(circle,rgba(122,172,216,.13) 0%,rgba(88,140,190,.055) 38%,rgba(60,100,150,0) 68%);
+    filter:blur(16px);
+    animation:breathe 11s ease-in-out infinite alternate;
+  }
+  @keyframes breathe{from{opacity:.42;transform:scale(1)}to{opacity:.92;transform:scale(1.07)}}
+
+  /* ── 黑胶 ─────────────────────────────────────────── */
+  .disc{
+    position:fixed;left:50%;top:46%;translate:-50% -50%;z-index:2;pointer-events:none;
+    width:min(74vmin,600px);aspect-ratio:1;border-radius:50%;
+    background:repeating-radial-gradient(circle at 50% 50%,
+      rgba(162,202,236,.055) 0 .8px,
+      rgba(162,202,236,0) .8px 3.4px);
+    -webkit-mask-image:radial-gradient(circle,#000 42%,rgba(0,0,0,.5) 62%,transparent 84%);
+    mask-image:radial-gradient(circle,#000 42%,rgba(0,0,0,.5) 62%,transparent 84%);
+    animation:spin 64s linear infinite;
+  }
+  .disc::before{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    background:conic-gradient(from 0deg,
+      transparent 0deg,rgba(178,215,242,.10) 24deg,transparent 44deg,
+      transparent 186deg,rgba(158,200,236,.06) 210deg,transparent 228deg);
+  }
+  .disc::after{
+    content:"";position:absolute;inset:37.5%;border-radius:50%;
+    border:1px solid rgba(152,196,230,.16);
+    background:radial-gradient(circle,rgba(120,166,206,.15),rgba(120,166,206,.035) 62%,transparent 74%);
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ── 暗角 ─────────────────────────────────────────── */
+  .vignette{
+    position:fixed;inset:0;z-index:4;pointer-events:none;
+    background:radial-gradient(ellipse 80% 70% at 50% 44%,
+      rgba(3,6,10,0) 32%,rgba(3,6,10,.52) 76%,rgba(2,4,7,.93) 100%);
+  }
+
+  /* ── 品牌小字 ─────────────────────────────────────── */
+  .brand{
+    position:absolute;top:calc(clamp(1.5rem,4.5vh,2.6rem) + env(safe-area-inset-top));
+    left:0;right:0;z-index:5;text-align:center;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.6rem;letter-spacing:.44em;text-transform:uppercase;
+    color:rgba(142,166,188,.38);pointer-events:none;
+  }
+
+  /* ── 语录 ─────────────────────────────────────────── */
+  main{
+    position:relative;z-index:3;width:100%;max-width:1040px;text-align:center;
+    padding:0 clamp(1.15rem,5.5vw,3rem);
+    padding-top:calc(3.4rem + env(safe-area-inset-top));
+    padding-bottom:calc(7.2rem + env(safe-area-inset-bottom));
+  }
+
+  #quote{padding:0 clamp(.2rem,2vw,1rem)}
+
+  #lines{
+    margin:0;
+    font-size:clamp(1.28rem,4.55vw,3rem);
+    font-weight:400;
+    line-height:1.95;
+    letter-spacing:.07em;
+    text-wrap:balance;
+    text-shadow:0 0 30px rgba(122,172,216,.13),0 1px 2px rgba(0,0,0,.55);
+  }
+
+  .line{
+    display:block;
+    opacity:1;transform:translateY(0);filter:blur(0);
+    transition:opacity .8s ease,transform 1s cubic-bezier(.16,.84,.28,1),filter .8s ease;
+    transition-delay:var(--d,0ms);
+    will-change:opacity,transform,filter;
+  }
+  #quote.out .line{
+    opacity:0;transform:translateY(-.85em);filter:blur(7px);
+    transition-duration:.42s;transition-delay:0ms;
+  }
+  #quote.in .line{
+    opacity:0;transform:translateY(1.1em);filter:blur(9px);
+    transition:none;
+  }
+
+  .meta{
+    margin:clamp(1.5rem,4.2vh,2.8rem) 0 0;
+    font-size:clamp(.7rem,1.9vw,.9rem);
+    letter-spacing:.3em;color:var(--dim);opacity:.72;
+  }
+  .meta .sep{margin:0 .6em;opacity:.5}
+
+  /* ── 箭头 ─────────────────────────────────────────── */
+  .arrow{
+    position:absolute;top:50%;translate:0 -50%;z-index:5;
+    width:clamp(38px,4.3vw,54px);height:clamp(38px,4.3vw,54px);
+    display:grid;place-items:center;border-radius:50%;cursor:pointer;padding:0;
+    border:1px solid rgba(150,194,228,.18);
+    background:rgba(140,182,216,.045);
+    color:var(--dim);opacity:.62;
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+    transition:opacity .35s,border-color .35s,color .35s,background .35s,transform .35s;
+  }
+  .arrow:hover,.arrow:focus-visible{
+    opacity:1;color:var(--cold);
+    border-color:rgba(150,200,236,.44);
+    background:rgba(140,182,216,.1);
+    outline:none;
+  }
+  .arrow:active{transform:scale(.94)}
+  .arrow.prev{left:clamp(.7rem,3vw,2.8rem)}
+  .arrow.next{right:clamp(.7rem,3vw,2.8rem)}
+
+  /* ── 底部 HUD ─────────────────────────────────────── */
+  .hud{
+    position:absolute;left:0;right:0;bottom:0;z-index:5;
+    display:flex;flex-direction:column;align-items:center;gap:.8rem;
+    padding:0 clamp(1.3rem,6vw,4rem);
+    padding-bottom:calc(clamp(1.5rem,4.5vh,2.7rem) + env(safe-area-inset-bottom));
+    pointer-events:none;
+  }
+  .hud>*{pointer-events:auto}
+
+  .bar{
+    width:100%;max-width:660px;height:2px;border-radius:99px;overflow:hidden;
+    background:rgba(150,194,228,.13);
+  }
+  #fill{
+    display:block;height:100%;width:100%;transform:scaleX(0);transform-origin:0 50%;
+    background:linear-gradient(90deg,rgba(138,190,232,.45),rgba(198,228,248,.95));
+    box-shadow:0 0 10px rgba(150,200,236,.55);
+  }
+
+  .hudrow{
+    display:flex;align-items:center;gap:1rem;
+    width:100%;max-width:660px;
+  }
+  .keyhint{
+    flex:0 0 auto;min-width:6.6ch;text-align:left;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.6rem;letter-spacing:.1em;color:rgba(142,166,188,.42);
+  }
+  .dots{display:flex;flex:1;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap}
+  .counter{
+    flex:0 0 auto;min-width:6.6ch;text-align:right;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:.66rem;letter-spacing:.1em;color:rgba(142,166,188,.6);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .dot{
+    position:relative;width:6px;height:6px;padding:0;border:0;border-radius:99px;
+    background:rgba(160,200,230,.26);cursor:pointer;appearance:none;
+    transition:width .45s cubic-bezier(.16,.84,.28,1),background .45s,box-shadow .45s;
+  }
+  .dot::after{content:"";position:absolute;inset:-11px;border-radius:99px}
+  .dot:hover{background:rgba(182,216,240,.5)}
+  .dot:focus-visible{outline:1px solid rgba(160,205,240,.7);outline-offset:4px}
+  .dot[aria-current="true"]{
+    width:22px;
+    background:linear-gradient(90deg,rgba(150,200,236,.92),rgba(214,235,250,.96));
+    box-shadow:0 0 9px rgba(150,205,240,.6);
+  }
+
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0 0 0 0);white-space:nowrap;border:0;
+  }
+
+  /* ── 小屏重排 ─────────────────────────────────────── */
+  @media (max-width:560px){
+    .keyhint{display:none}
+    .counter{position:absolute;right:0;bottom:-1.35rem;min-width:0}
+    .hudrow{position:relative}
+    .brand{font-size:.54rem;letter-spacing:.34em}
+    #lines{line-height:1.85;letter-spacing:.055em}
+    .arrow{width:36px;height:36px;opacity:.5}
+  }
+  @media (max-width:380px){
+    #lines{font-size:1.16rem}
+  }
+  @media (max-height:520px) and (orientation:landscape){
+    main{padding-top:2.4rem;padding-bottom:4.6rem}
+    #lines{font-size:clamp(1.1rem,3.2vh,1.7rem);line-height:1.7}
+    .meta{margin-top:.9rem}
+    .disc{width:min(88vmin,420px)}
+  }
+
+  /* ── reduced-motion 降级 ──────────────────────────── */
+  @media (prefers-reduced-motion: reduce){
+    #rain{display:none}
+    .glow{animation:none;opacity:.55}
+    .disc{animation:none}
+    .line{transition:opacity .22s linear,transform 0s,filter 0s}
+    #quote.out .line{transform:none;filter:none;transition-duration:.18s}
+    #quote.in .line{transform:none;filter:none}
+    .arrow,.dot{transition-duration:.01s}
+  }
+  html.reduced #rain{display:none}
+  html.reduced .glow{animation:none;opacity:.55}
+  html.reduced .disc{animation:none}
+  html.reduced #fill{display:none}
+</style>
+</head>
+<body>
+
+<div class="frame" id="frame">
+  <div class="glow" aria-hidden="true"></div>
+  <canvas id="rain" aria-hidden="true"></canvas>
+  <div class="disc" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="brand" aria-hidden="true">Rainie Love · 雨爱 · 2010</div>
+
+  <main>
+    <div id="quote" role="group" aria-roledescription="轮播" aria-label="《雨爱》语录轮播">
+      <p id="lines">窗外的天气</p>
+      <p class="meta">《雨爱》<span class="sep">·</span>杨丞琳</p>
+    </div>
+    <noscript>
+      <style>#lines{font-size:1.4rem}</style>
+      <p class="meta">需要 JavaScript 才能轮播 · 语录：窗外的天气，就像是你多变的表情</p>
+    </noscript>
+  </main>
+
+  <button class="arrow prev" id="prev" type="button" aria-label="上一句">
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+         stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14.5 5 8 12l6.5 7"/>
+    </svg>
+  </button>
+  <button class="arrow next" id="next" type="button" aria-label="下一句">
+    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+         stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9.5 5 16 12l-6.5 7"/>
+    </svg>
+  </button>
+
+  <div class="hud">
+    <div class="bar"><i id="fill"></i></div>
+    <div class="hudrow">
+      <span class="keyhint" aria-hidden="true">← → / space</span>
+      <div class="dots" id="dots" role="group" aria-label="选择语录"></div>
+      <span class="counter" id="counter" aria-hidden="true">01 / 12</span>
+    </div>
+  </div>
+
+  <div class="sr-only" id="live" aria-live="polite"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* 《雨爱》— 词：Wonderful，曲：金大洲，唱：杨丞琳。
+     仅摘取短句做氛围展示，版权归原作者及版权方所有。 */
+  var QUOTES = [
+    ["窗外的天气", "就像是你多变的表情"],
+    ["下雨了", "雨陪我哭泣"],
+    ["我的泪流在心里", "学会放弃"],
+    ["听雨的声音", "一滴滴清晰"],
+    ["你的呼吸像雨滴", "渗入我的爱里"],
+    ["真希望雨能下不停"],
+    ["让想念继续", "让爱变透明"],
+    ["窗外的雨滴", "一滴滴累积"],
+    ["屋内的湿气", "像储存爱你的记忆"],
+    ["一万颗雨滴的距离"],
+    ["雨爱的秘密", "能一直延续"],
+    ["我相信我将会看到", "彩虹的美丽"]
+  ];
+
+  var N = QUOTES.length;
+  var INTERVAL = 7000;
+  var OUT_MS = 420;
+  var IN_MS = 920;
+
+  var reduceMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var REDUCED = reduceMQ.matches;
+
+  var frameEl = document.getElementById("frame");
+  var quoteEl = document.getElementById("quote");
+  var linesEl = document.getElementById("lines");
+  var dotsEl = document.getElementById("dots");
+  var counterEl = document.getElementById("counter");
+  var fillEl = document.getElementById("fill");
+  var liveEl = document.getElementById("live");
+
+  var idx = 0;
+  var elapsed = 0;
+  var lastTs = 0;
+  var locked = false;
+  var pauseHover = false;
+  var pauseHidden = false;
+
+  function paused() { return pauseHover || pauseHidden; }
+  function pad2(v) { return v < 10 ? "0" + v : String(v); }
+  function esc(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function paint() {
+    var lines = QUOTES[idx];
+    var html = "";
+    for (var i = 0; i < lines.length; i++) {
+      html += '<span class="line" style="--d:' + (i * 110) + 'ms">' + esc(lines[i]) + "</span>";
+    }
+    linesEl.innerHTML = html;
+  }
+
+  function chrome() {
+    counterEl.textContent = pad2(idx + 1) + " / " + pad2(N);
+    for (var i = 0; i < dotsEl.children.length; i++) {
+      if (i === idx) dotsEl.children[i].setAttribute("aria-current", "true");
+      else dotsEl.children[i].removeAttribute("aria-current");
+    }
+  }
+
+  function goTo(target, fromUser) {
+    if (locked) return;
+    target = ((target % N) + N) % N;
+    if (target === idx) return;
+
+    idx = target;
+    elapsed = 0;
+    chrome();
+
+    if (fromUser) liveEl.textContent = "第 " + (idx + 1) + " 句：" + QUOTES[idx].join("");
+
+    if (REDUCED) { paint(); return; }
+
+    locked = true;
+    quoteEl.classList.remove("in");
+    quoteEl.classList.add("out");
+
+    window.setTimeout(function () {
+      paint();
+      quoteEl.classList.remove("out");
+      void quoteEl.offsetWidth;
+      quoteEl.classList.add("in");
+      void quoteEl.offsetWidth;
+      quoteEl.classList.remove("in");
+      window.setTimeout(function () { locked = false; }, IN_MS);
+    }, OUT_MS);
+  }
+
+  function next() { goTo(idx + 1, true); }
+  function prev() { goTo(idx - 1, true); }
+
+  /* ── 进度条 + 自动轮播 ─────────────────────────────── */
+  function loop(ts) {
+    if (!lastTs) lastTs = ts;
+    var dt = Math.min((ts - lastTs) / 1000, 0.12);
+    lastTs = ts;
+
+    if (!paused() && !locked) {
+      elapsed += dt * 1000;
+      if (elapsed >= INTERVAL) {
+        elapsed = 0;
+        goTo(idx + 1, false);
+      }
+    }
+
+    var p = elapsed / INTERVAL;
+    if (p > 1) p = 1;
+    fillEl.style.transform = "scaleX(" + p + ")";
+    window.requestAnimationFrame(loop);
+  }
+
+  /* ── 雨 ───────────────────────────────────────────── */
+  var canvas = document.getElementById("rain");
+  var ctx = canvas.getContext("2d");
+  var W = 0, H = 0, DPR = 1, drops = [];
+  var SLANT = 0.24;
+
+  function makeDrop(scattered) {
+    return {
+      x: Math.random() * (W + 160) - 80,
+      y: scattered ? Math.random() * H : -Math.random() * H * 0.5 - 10,
+      len: 9 + Math.random() * 24,
+      v: 190 + Math.random() * 340,
+      w: Math.random() < 0.14 ? 1.15 : 0.7,
+      a: 0.05 + Math.random() * 0.15
+    };
+  }
+
+  function initDrops() {
+    var count = Math.round((W * H) / 8200);
+    if (count < 55) count = 55;
+    if (count > 300) count = 300;
+    drops.length = 0;
+    for (var i = 0; i < count; i++) drops.push(makeDrop(true));
+  }
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = canvas.clientWidth || window.innerWidth;
+    H = canvas.clientHeight || window.innerHeight;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    initDrops();
+  }
+
+  function drawRain(dt) {
+    ctx.clearRect(0, 0, W, H);
+    /* 分档 alpha，合并成少量 path，减少绘制开销 */
+    var buckets = [[], [], []];
+    for (var i = 0; i < drops.length; i++) {
+      var d = drops[i];
+      d.y += d.v * dt;
+      d.x += d.v * SLANT * dt;
+      if (d.y - d.len > H || d.x < -120) {
+        drops[i] = makeDrop(false);
+        continue;
+      }
+      var k = d.a > 0.15 ? 2 : d.a > 0.1 ? 1 : 0;
+      buckets[k].push(d);
+    }
+
+    var alphas = [0.075, 0.135, 0.21];
+    for (var b = 0; b < 3; b++) {
+      if (!buckets[b].length) continue;
+      ctx.beginPath();
+      for (var j = 0; j < buckets[b].length; j++) {
+        var q = buckets[b][j];
+        ctx.moveTo(q.x + q.len * SLANT, q.y - q.len);
+        ctx.lineTo(q.x, q.y);
+      }
+      ctx.strokeStyle = "rgba(176,206,232," + alphas[b] + ")";
+      ctx.lineWidth = 0.9;
+      ctx.lineCap = "round";
+      ctx.stroke();
+    }
+  }
+
+  var rainLast = 0;
+  function rainLoop(ts) {
+    var dt = rainLast ? Math.min((ts - rainLast) / 1000, 0.05) : 0.016;
+    rainLast = ts;
+    drawRain(dt);
+    window.requestAnimationFrame(rainLoop);
+  }
+
+  /* ── 交互 ─────────────────────────────────────────── */
+  document.getElementById("next").addEventListener("click", next);
+  document.getElementById("prev").addEventListener("click", prev);
+
+  dotsEl.addEventListener("click", function (e) {
+    var t = e.target.closest ? e.target.closest(".dot") : null;
+    if (t) goTo(parseInt(t.getAttribute("data-i"), 10), true);
+  });
+
+  document.addEventListener("keydown", function (e) {
+    var k = e.key;
+    if (k === "ArrowRight") { e.preventDefault(); next(); }
+    else if (k === "ArrowLeft") { e.preventDefault(); prev(); }
+    else if (k === " " || k === "Spacebar") { e.preventDefault(); next(); }
+    else if (k === "Home") { e.preventDefault(); goTo(0, true); }
+    else if (k === "End") { e.preventDefault(); goTo(N - 1, true); }
+  });
+
+  var touchX = 0, touchY = 0, touching = false;
+  frameEl.addEventListener("touchstart", function (e) {
+    if (e.touches.length !== 1) { touching = false; return; }
+    touching = true;
+    touchX = e.touches[0].clientX;
+    touchY = e.touches[0].clientY;
+  }, { passive: true });
+
+  frameEl.addEventListener("touchend", function (e) {
+    if (!touching) return;
+    touching = false;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - touchX;
+    var dy = t.clientY - touchY;
+    if (Math.abs(dx) > 42 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      if (dx < 0) next(); else prev();
+    }
+  }, { passive: true });
+
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    frameEl.addEventListener("mouseenter", function () { pauseHover = true; });
+    frameEl.addEventListener("mouseleave", function () { pauseHover = false; });
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    pauseHidden = document.hidden;
+    lastTs = 0;
+  });
+
+  /* ── 启动 ─────────────────────────────────────────── */
+  if (REDUCED) document.documentElement.classList.add("reduced");
+
+  for (var d = 0; d < N; d++) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dot";
+    btn.setAttribute("data-i", String(d));
+    btn.setAttribute("aria-label", "第 " + (d + 1) + " 句");
+    dotsEl.appendChild(btn);
+  }
+
+  paint();
+  chrome();
+
+  if (!REDUCED) {
+    quoteEl.classList.add("in");
+    void quoteEl.offsetWidth;
+    quoteEl.classList.remove("in");
+  }
+
+  if (!REDUCED) {
+    resize();
+    window.addEventListener("resize", function () {
+      window.clearTimeout(window.__rz);
+      window.__rz = window.setTimeout(resize, 180);
+    });
+    rainLast = 0;
+    window.requestAnimationFrame(rainLoop);
+    window.requestAnimationFrame(loop);
+  }
+})();
+</script>
+</body>
+</html>
