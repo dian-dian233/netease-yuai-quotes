@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<!-- rainie-quotes v1.0.1 · 单文件 / 零依赖 -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -387,6 +388,7 @@
   function loop(ts) {
     if (!lastTs) lastTs = ts;
     var dt = Math.min((ts - lastTs) / 1000, 0.12);
+    if (dt < 0) dt = 0;
     lastTs = ts;
 
     if (!paused() && !locked) {

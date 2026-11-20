@@ -56,9 +56,25 @@
 ## 文件
 
 ```
-index.html   # 全部内容：结构 + 内联 CSS + 内联 JS + 雨滴 canvas
-README.md    # 本文件
+index.html    # 全部内容：结构 + 内联 CSS + 内联 JS + 雨滴 canvas
+selftest.py   # 逻辑自测（零依赖），生成最小 DOM 桩后用 node 跑真实脚本
+README.md     # 本文件
 ```
+
+## 自测
+
+```bash
+python3 selftest.py ./index.html && node _selftest_run.js ./index.html
+# 期望：结果：PASS 25 / FAIL 0
+```
+
+覆盖：初始渲染 / 圆点数量与跟随 / 计数器 / 前后切换与回绕 / 圆点跳转 /
+方向键与空格与 Home-End / 横向滑动生效、纵向滑动不误触 / 7 秒自动轮播 /
+悬停与切页暂停 / 无外链资源。v1.0.1 时实测 25/25 通过。
+
+说明：沙箱内无可用浏览器运行时（缺 libnspr4），**未做像素级截图比对**；
+视觉部分依据静态核算（小屏 390px 下单行 15 字符容量 > 最长 9 字符、
+横屏矮屏单独排版、圆点触控区外扩 28px）。
 
 ## 版权说明
 
